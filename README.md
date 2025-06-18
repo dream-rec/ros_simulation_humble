@@ -44,7 +44,7 @@
 │   ├── msg/                                 # 消息定义 (SensorState.msg, Sound.msg 等)
 │   └── srv/                                 # 服务定义 (Dqn.srv, Goal.srv 等)
 │
-└── turtlebot3_simulations/                  # TurtleBot3 仿真环境
+├── turtlebot3_simulations/                  # TurtleBot3 仿真环境
     ├── turtlebot3_fake_node/                # 虚拟机器人节点 (无 Gazebo)
     │   ├── include/                         # C++ 头文件
     │   ├── launch/                          # 虚拟机器人启动文件
@@ -75,6 +75,18 @@
     │   ├── urdf/                            # 机械臂 URDF 文件
     │   └── worlds/                          # 机械臂仿真世界
     └── turtlebot3_simulations/              # 仿真元功能包
+│
+└── image_saver/                             # 图像保存功能包 (新增)
+    ├── image_saver/                         # Python 模块
+    │   ├── __init__.py                      # 包初始化文件
+    │   ├── image_saver_node.py              # 自动图像保存节点
+    │   └── interactive_image_saver.py       # 交互式图像保存节点
+    ├── launch/                              # 启动文件
+    │   ├── image_saver.launch.py            # 自动保存启动文件
+    │   └── interactive_image_saver.launch.py # 交互式保存启动文件
+    ├── package.xml                          # ROS2 包描述文件
+    ├── setup.py                             # Python 包安装脚本
+    └── README.md                            # 详细使用说明
 ```
 
 ## 前置操作
@@ -242,6 +254,51 @@ ros2 run turtlebot3_teleop teleop_keyboard
 
 也可以在 RViz 中使用 "2D Pose Estimate" 工具设置机器人初始位置。
 
+### 图像采集功能 (新增)
+
+使用 TurtleBot3 Waffle Pi 的摄像头进行图像采集：
+
+#### 1. 启动带摄像头的仿真
+
+确保使用 Waffle Pi 模型 (配备摄像头)：
+
+```bash
+export TURTLEBOT3_MODEL=waffle_pi
+ros2 launch turtlebot3_gazebo turtlebot3_world.launch.py
+```
+
+#### 2. 自动图像保存
+
+定时自动保存摄像头图像：
+
+```bash
+# 使用默认参数 (每1秒保存一张，最多100张)
+ros2 launch image_saver image_saver.launch.py
+
+# 自定义参数
+ros2 launch image_saver image_saver.launch.py \
+    image_topic:=/camera/image_raw \
+    save_path:=~/robot_images \
+    save_interval:=2.0 \
+    max_images:=50
+```
+
+#### 3. 交互式图像保存 (推荐)
+
+实时显示摄像头画面并手动控制保存：
+
+```bash
+ros2 launch image_saver interactive_image_saver.launch.py
+```
+
+操作说明：
+- 按 **'s'** 键保存当前图像
+- 按 **'q'** 键退出程序
+- 或通过话题远程触发保存：
+  ```bash
+  ros2 topic pub /save_image_command std_msgs/msg/String "data: 'save'"
+  ```
+
 ## 功能包详细说明
 
 ### turtlebot3/ - 主要功能包集合
@@ -342,6 +399,35 @@ ros2 run turtlebot3_teleop teleop_keyboard
   - ROS2 Control 框架支持
   - 运动学和动力学仿真
   - 抓取和操作任务仿真
+
+### image_saver/ - 图像保存功能包
+
+这是一个专为TurtleBot3仿真环境设计的图像采集工具包，提供灵活的图像保存功能。
+
+#### 核心功能
+- **自动图像保存**: 定时自动采集摄像头图像
+  - 可配置保存间隔和最大图片数量
+  - 自动生成带时间戳的文件名
+  - 支持多种图像话题订阅
+
+- **交互式图像保存**: 实时显示和手动控制
+  - 实时摄像头画面显示
+  - 按键手动触发保存 (按 's' 保存，按 'q' 退出)
+  - 远程话题控制保存功能
+  - GUI界面友好操作
+
+#### 技术特点
+- 基于 ROS2 Humble 和 OpenCV
+- 支持 RGB 和深度图像格式
+- 自动处理图像编码转换
+- 灵活的参数配置系统
+- 完整的错误处理和故障诊断
+
+#### 应用场景
+- 机器人视觉算法开发
+- 数据集采集和标注
+- 仿真实验记录
+- 视觉 SLAM 数据准备
 
 ## 技术特性
 
